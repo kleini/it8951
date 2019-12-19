@@ -26,6 +26,41 @@ class Commands:
     VCOM = 0x039
 
 
+# rotation modes
+# TODO: make sure CW/CCW are correct
+class Rotate:
+    NONE = 0
+    CW = 1
+    CCW = 3
+    FLIP = 2  # 180 degree rotation
+
+
+# TODO: get rid of these M's
+class PixelModes:
+    M_2BPP = 0
+    M_3BPP = 1
+    M_4BPP = 2
+    M_8BPP = 3
+
+
+# these waveform modes are described here:
+# http://www.waveshare.net/w/upload/c/c4/E-paper-mode-declaration.pdf
+class DisplayModes:
+    INIT = 0
+    DU = 1
+    GC16 = 2
+    GL16 = 3
+    GLR16 = 4
+    GLD16 = 5
+    A2 = 6
+    DU4 = 7
+
+
+class EndianTypes:
+    LITTLE = 0
+    BIG = 1
+
+
 class Registers:
     DBASE = 0x1000             # base address. register RW access for I80 only
 
