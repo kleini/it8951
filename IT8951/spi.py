@@ -1,4 +1,5 @@
 import logging
+import numpy
 from time import sleep
 
 from .constants import Pins
@@ -12,6 +13,7 @@ class SPI:
         import spidev
 
         self.ready = False
+        self.debug = False
 
         self.spi = spidev.SpiDev(0, 1)
         self.spi.max_speed_hz = 4000000  # maximum 12MHz
@@ -40,7 +42,8 @@ class SPI:
     # noinspection PyUnusedLocal
     def ready_pin(self, channel):
         self.ready = True
-        # logging.debug('detected {:d}'.format(channel, self.ready))
+        if self.debug:
+            logging.debug('detected {:d}'.format(channel, self.ready))
 
     def prime_ready(self):
         # logging.debug('prime ready')
@@ -102,7 +105,12 @@ class SPI:
         Write the pixels in pixbuf to the device. Pixbuf should be an array of
         16-bit ints, containing packed pixel information.
         """
-        # FIXME
+        logging.debug('Writing pixel')
+        # data = [0x0000] + pixbuf
+        self.write(0x0000, pixbuf)
+        # for i in range(len(pixbuf)):
+        #    self.write(0x0000, [pixbuf[i]])
+        logging.debug('Writing pixel done')
 
     def write_cmd(self, cmd, wait, *args):
         """
@@ -165,9 +173,14 @@ class SPI:
 
     def xfer3(self, data):
         # logging.debug('transfer start')
-        data = self.bytes2unsignedshort(self.spi.xfer3(self.unsignedshort2bytes(data)))
+        tosend = self.unsignedshort2bytes(data)
+        # for x in tosend:
+        #     logging.debug(type(x))
+        #     logging.debug(x)
+        received = self.spi.xfer3(tosend)
+        rtn = self.bytes2unsignedshort(received)
         # logging.debug('transfer end')
-        return data
+        return rtn
 
     @staticmethod
     def unsignedshort2bytes(data):

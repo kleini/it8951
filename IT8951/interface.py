@@ -77,9 +77,18 @@ class EPD:
             self._load_img_area_start(endian_type, pixel_format, rotate_mode, xy, dims)
 
         buf = self._pack_pixels(buf, pixel_format)
+        # logging.debug(len(buf))
+        # logging.debug(buf)
         self.spi.write_pixels(buf)
 
-#        self._load_img_end()
+        self._load_img_end()
+
+    def display_area(self, xy, dims, display_mode):
+        """
+        Update a portion of the display to whatever is currently stored in device memory
+        for that region. Updated data can be written to device memory using EPD.write_img_area
+        """
+        self.spi.write_cmd(Commands.DPY_AREA, True, xy[0], xy[1], dims[0], dims[1], display_mode)
 
     def update_system_info(self):
         """
@@ -153,7 +162,7 @@ class EPD:
         else:
             rtn = None
 
-        return rtn
+        return rtn.tolist()
 
     def wait_display_ready(self):
         while self.read_register(Registers.LUTAFSR):
@@ -162,11 +171,14 @@ class EPD:
 
     def _load_img_start(self, endian_type, pixel_format, rotate_mode):
         arg = (endian_type << 8) | (pixel_format << 4) | rotate_mode
-        self.spi.write_cmd(Commands.LD_IMG, arg)
+        self.spi.write_cmd(Commands.LD_IMG, True, arg)
 
     def _load_img_area_start(self, endian_type, pixel_format, rotate_mode, xy, dims):
         arg0 = (endian_type << 8) | (pixel_format << 4) | rotate_mode
-        self.spi.write_cmd(Commands.LD_IMG_AREA, arg0, xy[0], xy[1], dims[0], dims[1])
+        self.spi.write_cmd(Commands.LD_IMG_AREA, True, arg0, xy[0], xy[1], dims[0], dims[1])
+
+    def _load_img_end(self):
+        self.spi.write_cmd(Commands.LD_IMG_END, False)
 
     def read_register(self, address):
         """

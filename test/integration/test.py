@@ -23,7 +23,9 @@ def main():
         tests += [print_system_info]
 
     tests += [
-        clear_display
+        clear_display,
+        display_gradient,
+        sleep
     ]
 
     for t in tests:

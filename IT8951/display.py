@@ -146,8 +146,8 @@ class AutoEPDDisplay(AutoDisplay):
         )
 
         # display sent image
-#        self.epd.display_area(
-#            xy,
-#            dims,
-#            mode
-#        )
+        self.epd.display_area(
+            xy,
+            dims,
+            mode
+        )
