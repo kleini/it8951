@@ -128,7 +128,7 @@ class AutoEPDDisplay(AutoDisplay):
     This class initializes the EPD, and uses it to display the updates
     """
 
-    def __init__(self, epd=None, vcom=-2.06, **kwargs):
+    def __init__(self, epd=None, vcom=-1.50, **kwargs):
 
         if epd is None:
             epd = EPD(vcom=vcom)

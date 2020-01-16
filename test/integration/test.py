@@ -17,15 +17,16 @@ def main():
         from IT8951.display import AutoEPDDisplay
 
         logging.info('Initializing EPD...')
-        display = AutoEPDDisplay(vcom=-2.06)
+        display = AutoEPDDisplay()
+        sleep(0.1)
         logging.info('VCOM set to {:1.2f}'.format(display.epd.get_vcom()))
 
         tests += [print_system_info]
 
     tests += [
-        clear_display,
-        display_gradient,
-        sleep
+        clear_display
+        # display_gradient,
+        # sleep
     ]
 
     for t in tests:

@@ -39,7 +39,6 @@ class SPI:
         GPIO.cleanup()
         self.spi.close()
 
-    # noinspection PyUnusedLocal
     def ready_pin(self, channel):
         self.ready = True
         if self.debug:
@@ -130,7 +129,7 @@ class SPI:
         """
         if wait:
             self.prime_ready()
-        self.write(0x6000, [cmd])  # 0x6000 is preamble
+        self.write(0x6000, [cmd]) # 0x6000 is preamble
         # between command and data chip select must toggle one time
         data = []
         for arg in args:
@@ -153,6 +152,32 @@ class SPI:
         """
         # self.write(0x0000, ary)
 
+    def write_cmd_code(self, cmd_code):
+        # Set Preamble for Write Command
+        preamble = 0x6000
+
+        # self.wait_ready()
+
+        # CS low
+
+        data = [0x6000, cmd_code]
+        self.xfer3(data)
+
+        # CS high
+
+    def write_data(self, us_data):
+        # self.wait_ready()
+        self.debug = True
+
+        # CS low
+
+        buffer = [0x0000, us_data]
+
+        self.xfer3(buffer)
+
+        # CS high
+        self.debug = False
+
     def read_data(self, n):
         """
         Read n 16-bit words of data from the device
@@ -172,6 +197,11 @@ class SPI:
         return self.read_data(1)[0]
 
     def xfer3(self, data):
+        """
+        Transfer 16-bit words of data to and from the device
+        :param data: data to transfer to the device
+        :return: data received from the device
+        """
         # logging.debug('transfer start')
         tosend = self.unsignedshort2bytes(data)
         # for x in tosend:

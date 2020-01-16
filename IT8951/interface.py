@@ -37,13 +37,17 @@ class EPD:
 
         # enable I80 packed mode
         self.write_register(Registers.I80CPCR, 0x1)
-        # data = self.read_register(Registers.I80CPCR)
-        # logging.debug(data)
+        # logging.debug(self.read_register(Registers.I80CPCR))
 
+        # logging.debug('Vcom = {:1.2f}'.format(vcom))
         if vcom != self.get_vcom():
             self.set_vcom(vcom)
-        # time.sleep(0.01)
+        # sleep(0.01)
         # logging.debug('Vcom = {:1.2f}'.format(self.get_vcom()))
+
+    def __del__(self):
+        # logging.debug('Ende EPD')
+        self.spi.__del__()
 
     def load_img_area(self, buf, rotate_mode=constants.Rotate.NONE, xy=None, dims=None):
         """
@@ -88,6 +92,7 @@ class EPD:
         Update a portion of the display to whatever is currently stored in device memory
         for that region. Updated data can be written to device memory using EPD.write_img_area
         """
+        logging.debug('display_area')
         self.spi.write_cmd(Commands.DPY_AREA, True, xy[0], xy[1], dims[0], dims[1], display_mode)
 
     def update_system_info(self):
@@ -165,19 +170,23 @@ class EPD:
         return rtn.tolist()
 
     def wait_display_ready(self):
+        logging.debug('wait_display_ready')
         while self.read_register(Registers.LUTAFSR):
             logging.debug('TODO Sleeping')
             sleep(0.01)
 
     def _load_img_start(self, endian_type, pixel_format, rotate_mode):
+        logging.debug('load_img_start')
         arg = (endian_type << 8) | (pixel_format << 4) | rotate_mode
         self.spi.write_cmd(Commands.LD_IMG, True, arg)
 
     def _load_img_area_start(self, endian_type, pixel_format, rotate_mode, xy, dims):
+        logging.debug('load_image_area_start')
         arg0 = (endian_type << 8) | (pixel_format << 4) | rotate_mode
         self.spi.write_cmd(Commands.LD_IMG_AREA, True, arg0, xy[0], xy[1], dims[0], dims[1])
 
     def _load_img_end(self):
+        logging.debug('load_img_end')
         self.spi.write_cmd(Commands.LD_IMG_END, False)
 
     def read_register(self, address):
