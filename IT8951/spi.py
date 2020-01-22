@@ -69,7 +69,7 @@ class SPI:
         #     logging.warn('busy timeout')
         # return retval
 
-    def read(self, preamble, count):
+    def read(self, preamble, count, debug=False):
         """
         Send preamble, and return a buffer of 16-bit unsigned ints of length count
         containing the data received
@@ -82,7 +82,7 @@ class SPI:
             send.append(0)
 
         self.prime_ready()
-        data = self.xfer3(send)
+        data = self.xfer3(send, debug)
         self.wait_ready()
 
         return data[2:]
@@ -159,26 +159,28 @@ class SPI:
         # self.wait_ready()
 
         # CS low
-
         data = [0x6000, cmd_code]
         self.xfer3(data)
 
         # CS high
 
-    def write_data(self, us_data):
+    def write_data(self, us_data, debug=False):
         # self.wait_ready()
-        self.debug = True
-
         # CS low
-
         buffer = [0x0000, us_data]
-
+        if debug:
+            logging.debug(buffer)
+        self.prime_ready()
         self.xfer3(buffer)
-
+        self.wait_ready()
         # CS high
-        self.debug = False
 
-    def read_data(self, n):
+    def send_cmd_arg(self, cmd_code, args, debug=False):
+        self.write_cmd_code(cmd_code)
+        for arg in args:
+            self.write_data(arg, debug)
+
+    def read_data(self, n, debug=False):
         """
         Read n 16-bit words of data from the device
 
@@ -187,8 +189,10 @@ class SPI:
 
         n : int
             The number of 2-byte words to read
+        debug: boolean
+            True to debug received data
         """
-        return self.read(0x1000, n)
+        return self.read(0x1000, n, debug)
 
     def read_int(self):
         """
@@ -196,10 +200,11 @@ class SPI:
         """
         return self.read_data(1)[0]
 
-    def xfer3(self, data):
+    def xfer3(self, data, debug=False):
         """
         Transfer 16-bit words of data to and from the device
         :param data: data to transfer to the device
+        :param debug: True for debugging received data
         :return: data received from the device
         """
         # logging.debug('transfer start')
@@ -208,6 +213,8 @@ class SPI:
         #     logging.debug(type(x))
         #     logging.debug(x)
         received = self.spi.xfer3(tosend)
+        if debug:
+            logging.debug(received)
         rtn = self.bytes2unsignedshort(received)
         # logging.debug('transfer end')
         return rtn

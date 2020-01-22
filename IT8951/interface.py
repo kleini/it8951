@@ -103,7 +103,7 @@ class EPD:
         data = self.spi.read_data(20)
         self.width = data[0]
         self.height = data[1]
-        self.img_buf_address = data[3] << 16 | data[2]
+        self.img_buf_address = data[2] | (data[3] << 16)
         self.firmware_version = ''.join([chr(x >> 8)+chr(x & 0xFF) for x in data[4:12]])
         self.lut_version = ''.join([chr(x >> 8)+chr(x & 0xFF) for x in data[12:20]])
 
@@ -170,9 +170,8 @@ class EPD:
         return rtn.tolist()
 
     def wait_display_ready(self):
-        logging.debug('wait_display_ready')
         while self.read_register(Registers.LUTAFSR):
-            logging.debug('TODO Sleeping')
+            logging.debug('LUTAFSR register says display is not ready')
             sleep(0.01)
 
     def _load_img_start(self, endian_type, pixel_format, rotate_mode):
@@ -181,9 +180,8 @@ class EPD:
         self.spi.write_cmd(Commands.LD_IMG, True, arg)
 
     def _load_img_area_start(self, endian_type, pixel_format, rotate_mode, xy, dims):
-        logging.debug('load_image_area_start')
         arg0 = (endian_type << 8) | (pixel_format << 4) | rotate_mode
-        self.spi.write_cmd(Commands.LD_IMG_AREA, True, arg0, xy[0], xy[1], dims[0], dims[1])
+        self.spi.send_cmd_arg(Commands.LD_IMG_AREA, [arg0, xy[0], xy[1], dims[0], dims[1]])
 
     def _load_img_end(self):
         logging.debug('load_img_end')
@@ -208,9 +206,9 @@ class EPD:
         # logging.debug('write register end')
 
     def _set_img_buf_base_addr(self, address):
-        word0 = address >> 16
-        word1 = address & 0xFFFF
-        self.write_register(Registers.LISAR+2, word0)
-        self.write_register(Registers.LISAR, word1)
+        word_h = (address >> 16) & 0x0000FFFF
+        word_l = address & 0x0000FFFF
+        self.write_register(Registers.LISAR+2, word_h)
+        self.write_register(Registers.LISAR, word_l)
         # logging.debug(self.read_register(Registers.LISAR+2))
         # logging.debug(self.read_register(Registers.LISAR))
