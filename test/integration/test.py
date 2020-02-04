@@ -24,14 +24,14 @@ def main():
         tests += [print_system_info]
 
     tests += [
-        clear_display
-        # display_gradient,
+        clear_display,
+        display_gradient
         # sleep
     ]
 
     for t in tests:
         t(display)
-        sleep(1)
+        # sleep(1)
 
     logging.info('Done!')
 

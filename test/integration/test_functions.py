@@ -18,7 +18,6 @@ __all__ = [
 
 import logging
 from time import sleep as sl
-
 from sys import path
 path += ['../../']
 from IT8951 import constants
@@ -36,12 +35,12 @@ def print_system_info(display):
 
 
 def clear_display(display):
-    print('Clearing display...')
+    logging.info('Clearing display...')
     display.clear()
 
 
 def display_gradient(display):
-    print('Displaying gradient...')
+    logging.info('Displaying gradient...')
 
     # set frame buffer to gradient
     for i in range(16):

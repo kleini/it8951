@@ -83,7 +83,15 @@ class EPD:
         buf = self._pack_pixels(buf, pixel_format)
         # logging.debug(len(buf))
         # logging.debug(buf)
+        logging.debug('pixels')
+        self.spi.debug = True
         self.spi.write_pixels(buf)
+        #for i, word in enumerate(buf):
+        #    if i % 1000 == 0:
+        #        logging.debug('{:d}'.format(i))
+        #    self.spi.write_data(word)
+        logging.debug('pixels done')
+        self.spi.debug = False
 
         self._load_img_end()
 
@@ -93,7 +101,7 @@ class EPD:
         for that region. Updated data can be written to device memory using EPD.write_img_area
         """
         logging.debug('display_area')
-        self.spi.write_cmd(Commands.DPY_AREA, True, xy[0], xy[1], dims[0], dims[1], display_mode)
+        self.spi.send_cmd_arg(Commands.DPY_AREA, [xy[0], xy[1], dims[0], dims[1], display_mode])
 
     def update_system_info(self):
         """
@@ -184,8 +192,7 @@ class EPD:
         self.spi.send_cmd_arg(Commands.LD_IMG_AREA, [arg0, xy[0], xy[1], dims[0], dims[1]])
 
     def _load_img_end(self):
-        logging.debug('load_img_end')
-        self.spi.write_cmd(Commands.LD_IMG_END, False)
+        self.spi.write_cmd_code(Commands.LD_IMG_END)
 
     def read_register(self, address):
         """

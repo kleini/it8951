@@ -11,3 +11,6 @@ VCOM = -1.50V
 
 https://github.com/naluhh/IT8951/tree/perf-opti
 
+Step 1: exactly equal to original waveshare implementation and get display to display something
+
+Step 2: optimize for faster transfer

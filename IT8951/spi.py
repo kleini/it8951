@@ -1,5 +1,5 @@
 import logging
-import numpy
+from threading import Event
 from time import sleep
 
 from .constants import Pins
@@ -13,6 +13,7 @@ class SPI:
         import spidev
 
         self.ready = False
+        self.ready2 = Event()
         self.debug = False
 
         self.spi = spidev.SpiDev(0, 1)
@@ -41,12 +42,16 @@ class SPI:
 
     def ready_pin(self, channel):
         self.ready = True
+        self.ready2.set()
         if self.debug:
             logging.debug('detected {:d}'.format(channel, self.ready))
 
     def prime_ready(self):
         # logging.debug('prime ready')
         self.ready = False
+
+    def prime_ready2(self):
+        self.ready2.clear()
 
     def wait_ready(self):
         """
@@ -68,6 +73,11 @@ class SPI:
         # if retval is None:
         #     logging.warn('busy timeout')
         # return retval
+
+    def wait_ready2(self, timeout=1.0):
+        if self.ready2.wait(timeout):
+            return
+        logging.debug('timeout2')
 
     def read(self, preamble, count, debug=False):
         """
@@ -91,25 +101,17 @@ class SPI:
         """
         Send preamble, and then write the data in ary (16-bit unsigned ints) over SPI
         """
-
-        send = [preamble]
-
+        buf = [preamble]
         if ary:
-            send = send + ary
-
-        self.xfer3(send)
+            buf = buf + ary
+        self.xfer3(buf)
 
     def write_pixels(self, pixbuf):
         """
         Write the pixels in pixbuf to the device. Pixbuf should be an array of
         16-bit ints, containing packed pixel information.
         """
-        logging.debug('Writing pixel')
-        # data = [0x0000] + pixbuf
         self.write(0x0000, pixbuf)
-        # for i in range(len(pixbuf)):
-        #    self.write(0x0000, [pixbuf[i]])
-        logging.debug('Writing pixel done')
 
     def write_cmd(self, cmd, wait, *args):
         """
@@ -165,14 +167,13 @@ class SPI:
         # CS high
 
     def write_data(self, us_data, debug=False):
-        # self.wait_ready()
         # CS low
         buffer = [0x0000, us_data]
         if debug:
             logging.debug(buffer)
-        self.prime_ready()
+        self.prime_ready2()
         self.xfer3(buffer)
-        self.wait_ready()
+        self.wait_ready2(5.0)
         # CS high
 
     def send_cmd_arg(self, cmd_code, args, debug=False):
