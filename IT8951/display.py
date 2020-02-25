@@ -59,6 +59,43 @@ class AutoDisplay:
 
         self.prev_frame = self._get_frame_buf().copy()
 
+    def draw_partial(self, mode):
+        """
+        Write only the rectangle bounding the pixels of the image that have changed
+        since the last call to draw_full or draw_partial
+        """
+
+        if self.prev_frame is None:  # first call since initialization
+            self.draw_full(mode)
+
+        # compute diff for this frame
+        # TODO: should not have round_to in this class
+        diff_box = self._compute_diff_box(self.prev_frame, self._get_frame_buf(), round_to=4)
+
+        if self.track_gray:
+            self.gray_change_bbox = self._merge_bbox(self.gray_change_bbox, diff_box)
+            # reset grayscale changes to zero
+            if mode != DisplayModes.DU:
+                diff_box = self._round_bbox(self.gray_change_bbox, round_to=4)
+                self.gray_change_bbox = None
+
+        self.prev_frame = self._get_frame_buf().copy()
+
+        # nothing to do
+        if diff_box is None:
+            return
+
+        buf = self._get_frame_buf().crop(diff_box)
+
+        # flatten to black or white
+        if mode == DisplayModes.DU:
+            buf = buf.point(lambda x: 0x00 if x < 0xB0 else 0xFF)
+
+        xy = (diff_box[0], diff_box[1])
+        dims = (diff_box[2]-diff_box[0], diff_box[3]-diff_box[1])
+
+        self.update(buf.getdata(), xy, dims, mode)
+
     def clear(self):
         """
         Clear display, device image buffer, and frame buffer (e.g. at startup)

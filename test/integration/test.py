@@ -1,6 +1,6 @@
 import logging
 import sys
-from time import sleep
+import time
 
 from test_functions import *
 
@@ -18,14 +18,15 @@ def main():
 
         logging.info('Initializing EPD...')
         display = AutoEPDDisplay()
-        sleep(0.1)
+        time.sleep(0.1)
         logging.info('VCOM set to {:1.2f}'.format(display.epd.get_vcom()))
 
         tests += [print_system_info]
 
     tests += [
         clear_display,
-        # display_gradient,
+        display_gradient,
+        partial_update,
         display_image_8bpp
     ]
 
