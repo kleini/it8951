@@ -13,11 +13,11 @@ __all__ = [
     'print_system_info',
     'clear_display',
     'display_gradient',
-    'sleep'
+    'display_image_8bpp',
 ]
 
 import logging
-from time import sleep as sl
+from PIL import Image
 from sys import path
 path += ['../../']
 from IT8951 import constants
@@ -58,5 +58,20 @@ def display_gradient(display):
     display.draw_full(constants.DisplayModes.GC16)
 
 
-def sleep(display):
-    sl(3)
+def display_image_8bpp(display):
+    img_path = 'images/EWAe800-600.png'
+    logging.info('Displaying "{}"...'.format(img_path))
+
+    # clearing image to white
+    display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
+
+    img = Image.open(img_path)
+
+    # TODO: this should be built-in
+    dims = (display.width, display.height)
+
+    img.thumbnail(dims)
+    paste_coords = [dims[i] - img.size[i] for i in (0,1)]  # align image with bottom of display
+    display.frame_buf.paste(img, paste_coords)
+
+    display.draw_full(constants.DisplayModes.GC16)

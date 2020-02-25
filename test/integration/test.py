@@ -25,13 +25,12 @@ def main():
 
     tests += [
         clear_display,
-        display_gradient
-        # sleep
+        # display_gradient,
+        display_image_8bpp
     ]
 
     for t in tests:
         t(display)
-        # sleep(1)
 
     logging.info('Done!')
 

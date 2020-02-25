@@ -31,7 +31,8 @@ class EPD:
         self.img_buf_address = None
         self.firmware_version = None
         self.lut_version = None
-        self.update_system_info()
+        [self.width, self.height, self.img_buf_address, self.firmware_version, self.lut_version] =\
+            self.update_system_info()
 
         self._set_img_buf_base_addr(self.img_buf_address)
 
@@ -81,17 +82,10 @@ class EPD:
             self._load_img_area_start(endian_type, pixel_format, rotate_mode, xy, dims)
 
         buf = self._pack_pixels(buf, pixel_format)
-        # logging.debug(len(buf))
-        # logging.debug(buf)
-        logging.debug('pixels')
-        self.spi.debug = True
-        self.spi.write_pixels(buf)
-        #for i, word in enumerate(buf):
-        #    if i % 1000 == 0:
-        #        logging.debug('{:d}'.format(i))
-        #    self.spi.write_data(word)
-        logging.debug('pixels done')
-        self.spi.debug = False
+        logging.debug('pixels {:d}'.format(len(buf)))
+        self.spi.count = 0
+        self.spi.write_ndata(buf)
+        logging.debug('pixels done {:d}'.format(self.spi.count))
 
         self._load_img_end()
 
@@ -100,29 +94,27 @@ class EPD:
         Update a portion of the display to whatever is currently stored in device memory
         for that region. Updated data can be written to device memory using EPD.write_img_area
         """
-        logging.debug('display_area')
-        self.spi.send_cmd_arg(Commands.DPY_AREA, [xy[0], xy[1], dims[0], dims[1], display_mode])
+        self.spi.send_cmd_arg(Commands.DPY_AREA, [xy[0], xy[1], dims[0], dims[1], display_mode], 2.0)
 
     def update_system_info(self):
         """
         Get information about the system, and store it in class attributes
         """
-        self.spi.write_cmd(Commands.GET_DEV_INFO, True)
+        self.spi.write_cmd_code(Commands.GET_DEV_INFO, 1.0)
         data = self.spi.read_data(20)
-        self.width = data[0]
-        self.height = data[1]
-        self.img_buf_address = data[2] | (data[3] << 16)
-        self.firmware_version = ''.join([chr(x >> 8)+chr(x & 0xFF) for x in data[4:12]])
-        self.lut_version = ''.join([chr(x >> 8)+chr(x & 0xFF) for x in data[12:20]])
+        img_buf_address = data[2] | (data[3] << 16)
+        firmware_version = ''.join([chr(x >> 8)+chr(x & 0xFF) for x in data[4:12]])
+        lut_version = ''.join([chr(x >> 8)+chr(x & 0xFF) for x in data[12:20]])
+        return data[0:2] + [img_buf_address, firmware_version, lut_version]
 
     def get_vcom(self):
         """
         Get the device's current value for VCOM voltage
         """
-        # Getting Vcom results in three rising edges of the busy line. This method currently reads only two of them.
-        self.spi.write_cmd(Commands.VCOM, True, 0)
+        self.spi.count = 0
+        self.spi.write_cmd_code(Commands.VCOM, 1.0)
+        self.spi.write_data(0)
         vcom_int = self.spi.read_int()
-        # logging.debug('get vcom end')
         return -vcom_int/1000
 
     def set_vcom(self, vcom):
@@ -130,9 +122,9 @@ class EPD:
         Set the device's VCOM voltage
         """
         self._validate_vcom(vcom)
-        vcom_int = int(-1000*vcom)
-        # Setting Vcom results in three rising edges of the busy line. This method currently reads only one of them.
-        self.spi.write_cmd(Commands.VCOM, True, 1, vcom_int)
+        self.spi.write_cmd_code(Commands.VCOM, 1.0)
+        self.spi.write_data(1)
+        self.spi.write_data(int(-1000*vcom))
 
     @staticmethod
     def _validate_vcom(vcom):
@@ -198,24 +190,19 @@ class EPD:
         """
         Read a device register
         """
-        # logging.debug('read register start')
-        self.spi.write_cmd(Commands.REG_RD, False, address)
-        data = self.spi.read_int()
-        # logging.debug('read register end')
-        return data
+        self.spi.write_cmd_code(Commands.REG_RD)
+        self.spi.write_data(address, 0.0)
+        return self.spi.read_int()
 
     def write_register(self, address, val):
         """
         Write to a device register
         """
-        # logging.debug('write register start')
-        self.spi.write_cmd(Commands.REG_WR, True, address, val)
-        # logging.debug('write register end')
+        self.spi.write_cmd_code(Commands.REG_WR)
+        self.spi.write_ndata([address, val])
 
     def _set_img_buf_base_addr(self, address):
         word_h = (address >> 16) & 0x0000FFFF
         word_l = address & 0x0000FFFF
         self.write_register(Registers.LISAR+2, word_h)
         self.write_register(Registers.LISAR, word_l)
-        # logging.debug(self.read_register(Registers.LISAR+2))
-        # logging.debug(self.read_register(Registers.LISAR))

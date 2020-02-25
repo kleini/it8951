@@ -1,0 +1,2 @@
+test/integration/images/EWAe800-600.png filter=lfs diff=lfs merge=lfs -text
+test/integration/fonts/FreeSans.ttf filter=lfs diff=lfs merge=lfs -text
