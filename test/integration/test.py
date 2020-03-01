@@ -24,10 +24,7 @@ def main():
         tests += [print_system_info]
 
     tests += [
-        clear_display,
-        display_gradient,
-        partial_update,
-        display_image_8bpp
+        ewa
     ]
 
     for t in tests:

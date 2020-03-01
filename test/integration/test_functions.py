@@ -14,7 +14,8 @@ __all__ = [
     'clear_display',
     'display_gradient',
     'display_image_8bpp',
-    'partial_update'
+    'partial_update',
+    'ewa'
 ]
 
 import logging
@@ -102,6 +103,27 @@ def partial_update(display):
     display.draw_partial(constants.DisplayModes.DU)
     logging.info('Partial update took {:1.2f} seconds.'.format(time.time() - start))
 
+
+def ewa(display):
+    display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
+    draw = ImageDraw.Draw(display.frame_buf)
+    # general areas
+    draw.rectangle([(0, 0), (268, 291)], 0xFF, 0x00, 5)
+    draw.rectangle([(264, 0), (536, 291)], 0xFF, 0x00, 5)
+    draw.rectangle([(532, 0), (799, 291)], 0xFF, 0x00, 5)
+    draw.rectangle([(0, 309), (799, 599)], 0xFF, 0x00, 5)
+    # battery
+    draw.rectangle([(549, 39), (750, 107)], 0xFF, 0x00, 5)
+    draw.rectangle([(746, 52), (763, 91)], 0xFF, 0x00, 5)
+    draw.point([(549, 39), (750, 39), (549, 107), (750, 107), (763, 52), (763, 91)], 0xFF)
+    draw.line([(554, 44), (745, 102)], 0x00, 5)
+    # powerbar
+    draw.rectangle([(16, 426), (745, 508)], 0xFF, 0x00, 3)
+    draw.line([(746, 427), (782, 427)], 0x00, 3)
+    draw.line([(746, 507), (782, 507)], 0x00, 3)
+    for i in range(0, 14):
+        draw.line([(16 + i * 56, 429), (16 + i * 56, 525)], 0x00)
+    display.draw_full(constants.DisplayModes.GC16)
 
 # this function is just a helper for the others
 def _place_text(img, text, x_offset=0, y_offset=0):
