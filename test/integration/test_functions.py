@@ -15,7 +15,8 @@ __all__ = [
     'display_gradient',
     'display_image_8bpp',
     'partial_update',
-    'ewa'
+    'ewa',
+    'draw'
 ]
 
 import logging
@@ -106,7 +107,12 @@ def partial_update(display):
 
 def ewa(display):
     display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
-    draw = ImageDraw.Draw(display.frame_buf)
+    draw(display.frame_buf)
+    display.draw_full(constants.DisplayModes.GC16)
+
+
+def draw(display):
+    draw = ImageDraw.Draw(display)
     # general areas
     draw.rectangle([(0, 0), (268, 291)], 0xFF, 0x00, 5)
     draw.rectangle([(264, 0), (536, 291)], 0xFF, 0x00, 5)
@@ -123,7 +129,28 @@ def ewa(display):
     draw.line([(746, 507), (782, 507)], 0x00, 3)
     for i in range(0, 14):
         draw.line([(16 + i * 56, 429), (16 + i * 56, 525)], 0x00)
-    display.draw_full(constants.DisplayModes.GC16)
+    # texts top left
+    draw.text((12, 8), 'EWA', font=ImageFont.truetype('fonts/Arial_Black.ttf', 48))
+    font = ImageFont.truetype('fonts/Arial_Black.ttf', 32)
+    draw.text((12, 75), 'Temperaturen', font=font)
+    draw.text((12, 120), 'Motor', font=font)
+    draw.text((12, 165), 'Controller', font=font)
+    draw.text((12, 210), 'Batterie', font=font)
+    draw.text((259 - font.getsize('28°')[0], 120), '28°', font=font)
+    draw.text((259 - font.getsize('35°')[0], 165), '35°', font=font)
+    draw.text((259 - font.getsize('46°')[0], 210), '46°', font=font)
+    # texts top middle
+    draw.text((282, 120), 'V Seil', font=font)
+    draw.text((282, 165), '38 km/h', font=font)
+    # texts top right
+    draw.text((547, 120), 'Batterie', font=font)
+    draw.text((547, 165), '78%', font=font)
+    # texts in bottom box
+    draw.text((16, 328), 'Zugkraft in kg', font=font)
+    font27 = ImageFont.truetype('fonts/Arial_Black.ttf', 27)
+    for i in list(range(0, 11)) + [13]:
+        draw.text((16 + i * 56 - font27.getsize(str(i * 10))[0]/2, 520), str(i * 10), font=font27)
+
 
 # this function is just a helper for the others
 def _place_text(img, text, x_offset=0, y_offset=0):
