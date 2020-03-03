@@ -15,14 +15,15 @@ __all__ = [
     'display_gradient',
     'display_image_8bpp',
     'partial_update',
-    'ewa',
-    'draw'
+    'ewa'
 ]
 
 import logging
+import random
 import time
 from PIL import Image, ImageDraw, ImageFont
 from sys import path
+
 path += ['../../']
 from IT8951 import constants
 
@@ -80,7 +81,7 @@ def display_image_8bpp(display):
     dims = (display.width, display.height)
 
     img.thumbnail(dims)
-    paste_coords = [dims[i] - img.size[i] for i in (0,1)]  # align image with bottom of display
+    paste_coords = [dims[i] - img.size[i] for i in (0, 1)]  # align image with bottom of display
     display.frame_buf.paste(img, paste_coords)
 
     display.draw_full(constants.DisplayModes.GC16)
@@ -106,50 +107,12 @@ def partial_update(display):
 
 
 def ewa(display):
-    display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
-    draw(display.frame_buf)
-    display.draw_full(constants.DisplayModes.GC16)
-
-
-def draw(display):
-    draw = ImageDraw.Draw(display)
-    # general areas
-    draw.rectangle([(0, 0), (268, 291)], 0xFF, 0x00, 5)
-    draw.rectangle([(264, 0), (536, 291)], 0xFF, 0x00, 5)
-    draw.rectangle([(532, 0), (799, 291)], 0xFF, 0x00, 5)
-    draw.rectangle([(0, 309), (799, 599)], 0xFF, 0x00, 5)
-    # battery
-    draw.rectangle([(549, 39), (750, 107)], 0xFF, 0x00, 5)
-    draw.rectangle([(746, 52), (763, 91)], 0xFF, 0x00, 5)
-    draw.point([(549, 39), (750, 39), (549, 107), (750, 107), (763, 52), (763, 91)], 0xFF)
-    draw.line([(554, 44), (745, 102)], 0x00, 5)
-    # powerbar
-    draw.rectangle([(16, 426), (745, 508)], 0xFF, 0x00, 3)
-    draw.line([(746, 427), (782, 427)], 0x00, 3)
-    draw.line([(746, 507), (782, 507)], 0x00, 3)
-    for i in range(0, 14):
-        draw.line([(16 + i * 56, 429), (16 + i * 56, 525)], 0x00)
-    # texts top left
-    draw.text((12, 8), 'EWA', font=ImageFont.truetype('fonts/Arial_Black.ttf', 48))
-    font = ImageFont.truetype('fonts/Arial_Black.ttf', 32)
-    draw.text((12, 75), 'Temperaturen', font=font)
-    draw.text((12, 120), 'Motor', font=font)
-    draw.text((12, 165), 'Controller', font=font)
-    draw.text((12, 210), 'Batterie', font=font)
-    draw.text((259 - font.getsize('28°')[0], 120), '28°', font=font)
-    draw.text((259 - font.getsize('35°')[0], 165), '35°', font=font)
-    draw.text((259 - font.getsize('46°')[0], 210), '46°', font=font)
-    # texts top middle
-    draw.text((282, 120), 'V Seil', font=font)
-    draw.text((282, 165), '38 km/h', font=font)
-    # texts top right
-    draw.text((547, 120), 'Batterie', font=font)
-    draw.text((547, 165), '78%', font=font)
-    # texts in bottom box
-    draw.text((16, 328), 'Zugkraft in kg', font=font)
-    font27 = ImageFont.truetype('fonts/Arial_Black.ttf', 27)
-    for i in list(range(0, 11)) + [13]:
-        draw.text((16 + i * 56 - font27.getsize(str(i * 10))[0]/2, 520), str(i * 10), font=font27)
+    paper_display = PaperDisplay(display)
+    start = time.time()
+    for i in range(0, 20):
+        paper_display.set_torque(random.uniform(0, 140))
+        paper_display.draw_torque()
+    logging.debug('Time {:1.2f}'.format((time.time() - start) / 20))
 
 
 # this function is just a helper for the others
@@ -166,7 +129,77 @@ def _place_text(img, text, x_offset=0, y_offset=0):
     text_width, _ = font.getsize(text)
     text_height = fontsize
 
-    draw_x = (img_width - text_width)//2 + x_offset
-    draw_y = (img_height - text_height)//2 + y_offset
+    draw_x = (img_width - text_width) // 2 + x_offset
+    draw_y = (img_height - text_height) // 2 + y_offset
 
     draw.text((draw_x, draw_y), text, font=font)
+
+
+class PaperDisplay(object):
+    _torque = 0.0
+
+    def __init__(self, display):
+        self._display = display
+        self._draw = ImageDraw.Draw(display.frame_buf)
+        self.build()
+
+    def build(self):
+        # general areas
+        self._draw.rectangle([(0, 0), (268, 291)], 0xFF, 0x00, 5)
+        self._draw.rectangle([(264, 0), (536, 291)], 0xFF, 0x00, 5)
+        self._draw.rectangle([(532, 0), (799, 291)], 0xFF, 0x00, 5)
+        self._draw.rectangle([(0, 309), (799, 599)], 0xFF, 0x00, 5)
+        # battery
+        self._draw.rectangle([(549, 39), (750, 107)], 0xFF, 0x00, 5)
+        self._draw.rectangle([(746, 52), (763, 91)], 0xFF, 0x00, 5)
+        self._draw.point([(549, 39), (750, 39), (549, 107), (750, 107), (763, 52), (763, 91)], 0xFF)
+        self._draw.line([(554, 44), (745, 102)], 0x00, 5)
+        # powerbar
+        self._draw.rectangle([(16, 426), (745, 508)], 0xFF, 0x00, 3)
+        self._draw.line([(746, 427), (782, 427)], 0x00, 3)
+        self._draw.line([(746, 507), (782, 507)], 0x00, 3)
+        self.draw_torque_lines()
+        # texts top left
+        self._draw.text((12, 8), 'EWA', font=ImageFont.truetype('fonts/Arial_Black.ttf', 48))
+        font = ImageFont.truetype('fonts/Arial_Black.ttf', 32)
+        self._draw.text((12, 75), 'Temperaturen', font=font)
+        self._draw.text((12, 120), 'Motor', font=font)
+        self._draw.text((12, 165), 'Controller', font=font)
+        self._draw.text((12, 210), 'Batterie', font=font)
+        self._draw.text((259 - font.getsize('28°')[0], 120), '28°', font=font)
+        self._draw.text((259 - font.getsize('35°')[0], 165), '35°', font=font)
+        self._draw.text((259 - font.getsize('46°')[0], 210), '46°', font=font)
+        # texts top middle
+        self._draw.text((282, 120), 'V Seil', font=font)
+        self._draw.text((282, 165), '38 km/h', font=font)
+        # texts top right
+        self._draw.text((547, 120), 'Batterie', font=font)
+        self._draw.text((547, 165), '78%', font=font)
+        # texts in bottom box
+        self._draw.text((16, 328), 'Zugkraft in kg', font=font)
+        font27 = ImageFont.truetype('fonts/Arial_Black.ttf', 27)
+        for i in list(range(0, 11)) + [13]:
+            self._draw.text((16 + i * 56 - font27.getsize(str(i * 10))[0] / 2, 520), str(i * 10), font=font27)
+        self._display.draw_full(constants.DisplayModes.GC16)
+
+    def draw_torque_lines(self):
+        for i in range(0, 14):
+            self._draw.line([(16 + i * 56, 429), (16 + i * 56, 525)], 0x00)
+        self._draw.line([(744, 426), (744, 508)], 0x00, 3)
+
+    def set_torque(self, value):
+        if value > 140:
+            value = 140
+        if value < 0:
+            value = 0
+        self._torque = value
+
+    def draw_torque(self):
+        right = self._torque * 5.6
+        self._draw.rectangle([(19, 429), (794, 505)], 0xFF)
+        if right > 794:
+            right = 794
+        if right > 3:
+            self._draw.rectangle([(19, 429), (16 + right, 505)], 0x70)
+        self.draw_torque_lines()
+        self._display.draw_partial(constants.DisplayModes.DU)
