@@ -82,10 +82,10 @@ class EPD:
             self._load_img_area_start(endian_type, pixel_format, rotate_mode, xy, dims)
 
         buf = self._pack_pixels(buf, pixel_format)
-        logging.debug('pixels {:d}'.format(len(buf)))
+        # logging.debug('pixels {:d}'.format(len(buf)))
         self.spi.count = 0
         self.spi.write_ndata(buf)
-        logging.debug('pixels done {:d}'.format(self.spi.count))
+        # logging.debug('pixels done {:d}'.format(self.spi.count))
 
         self._load_img_end()
 

@@ -110,9 +110,10 @@ def ewa(display):
     paper_display = PaperDisplay(display)
     start = time.time()
     for i in range(0, 20):
-        paper_display.set_torque(random.uniform(0, 140))
+        #paper_display.set_torque(random.uniform(0, 140))
+        paper_display.set_torque(70)
         paper_display.draw_torque()
-    logging.debug('Time {:1.2f}'.format((time.time() - start) / 20))
+    logging.debug('avg time {:1.3f}'.format((time.time() - start) / 20))
 
 
 # this function is just a helper for the others
@@ -202,4 +203,4 @@ class PaperDisplay(object):
         if right > 3:
             self._draw.rectangle([(19, 429), (16 + right, 505)], 0x70)
         self.draw_torque_lines()
-        self._display.draw_partial(constants.DisplayModes.DU)
+        self._display.draw_partial(constants.DisplayModes.GC16)

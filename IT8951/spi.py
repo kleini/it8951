@@ -19,6 +19,7 @@ class SPI:
         self.count = 0
 
         self.spi = spidev.SpiDev(0, 1)
+        # raising the frequency does not make data transfer faster
         self.spi.max_speed_hz = 4000000  # maximum 12MHz
         self.spi.mode = 0b00
 
@@ -38,7 +39,6 @@ class SPI:
         self.wait_ready(2.0)
 
     def __del__(self):
-        logging.debug('Cleanup')
         GPIO.cleanup()
         self.spi.close()
 
@@ -57,7 +57,7 @@ class SPI:
         start = time.time()
         if self.ready.wait(timeout):
             return
-        logging.error('{:1.5f}'.format(time.time() - start))
+        logging.error('{:1.3f}'.format(time.time() - start))
 
     def write(self, preamble, ary):
         """

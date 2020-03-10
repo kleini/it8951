@@ -1,8 +1,5 @@
-
 from PIL import Image, ImageChops
-
 from .constants import DisplayModes
-
 from .interface import EPD
 
 
@@ -154,7 +151,7 @@ class AutoDisplay:
         miny = min(a[1], b[1])
         maxx = max(a[2], b[2])
         maxy = max(a[3], b[3])
-        return (minx, miny, maxx, maxy)
+        return minx, miny, maxx, maxy
 
     def update(self, data, xy, dims, mode):
         raise NotImplementedError
@@ -173,9 +170,9 @@ class AutoEPDDisplay(AutoDisplay):
         AutoDisplay.__init__(self, self.epd.width, self.epd.height, **kwargs)
 
     def update(self, data, xy, dims, mode):
-
         # send image to controller
         self.epd.wait_display_ready()
+        # highly depends on the amount of data to be transfered. about 3ns per byte
         self.epd.load_img_area(
             data,
             xy=xy,
@@ -183,6 +180,7 @@ class AutoEPDDisplay(AutoDisplay):
         )
 
         # display sent image
+        # takes 480-482ms (very constant for GC16)
         self.epd.display_area(
             xy,
             dims,

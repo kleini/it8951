@@ -16,21 +16,20 @@ def main():
     if not False:
         from IT8951.display import AutoEPDDisplay
 
-        logging.info('Initializing EPD...')
+#        logging.info('Initializing EPD...')
         display = AutoEPDDisplay()
         time.sleep(0.1)
-        logging.info('VCOM set to {:1.2f}'.format(display.epd.get_vcom()))
-
-        tests += [print_system_info]
+#        logging.info('VCOM set to {:1.2f}'.format(display.epd.get_vcom()))
 
     tests += [
+#        print_system_info,
         ewa
     ]
 
     for t in tests:
         t(display)
 
-    logging.info('Done!')
+#    logging.info('Done!')
 
     return 0
 
