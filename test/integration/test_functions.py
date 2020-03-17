@@ -109,11 +109,12 @@ def partial_update(display):
 def ewa(display):
     paper_display = PaperDisplay(display)
     start = time.time()
-    for i in range(0, 20):
-        #paper_display.set_torque(random.uniform(0, 140))
-        paper_display.set_torque(70)
-        paper_display.draw_torque()
+    #for i in range(0, 20):
+        # paper_display.set_torque(random.uniform(0, 140))
+    paper_display.set_torque(70)
     logging.debug('avg time {:1.3f}'.format((time.time() - start) / 20))
+    time.sleep(5)
+    paper_display.stop()
 
 
 # this function is just a helper for the others
@@ -136,13 +137,22 @@ def _place_text(img, text, x_offset=0, y_offset=0):
     draw.text((draw_x, draw_y), text, font=font)
 
 
+from threading import Thread
+
+
 class PaperDisplay(object):
+    _run = True
     _torque = 0.0
 
     def __init__(self, display):
         self._display = display
         self._draw = ImageDraw.Draw(display.frame_buf)
-        self.build()
+        self._thread = Thread(target=self.display_loop, name='ePaper display loop')
+        self._thread.start()
+
+    def stop(self):
+        self._run = False
+        self._thread.join()
 
     def build(self):
         # general areas
@@ -204,3 +214,8 @@ class PaperDisplay(object):
             self._draw.rectangle([(19, 429), (16 + right, 505)], 0x70)
         self.draw_torque_lines()
         self._display.draw_partial(constants.DisplayModes.GC16)
+
+    def display_loop(self):
+        self.build()
+        while self._run:
+            time.sleep(0.1)
