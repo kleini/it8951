@@ -142,7 +142,18 @@ from threading import Thread
 
 class PaperDisplay(object):
     _run = True
-    _torque = 0.0
+    _torque_old = 0.0
+    _torque_new = 0.0
+    _rope_speed_old = 0.0
+    _rope_speed_new = 0.0
+    _temp_motor_old = None
+    _temp_motor_new = None
+    _temp_controller_old = None
+    _temp_controller_new = None
+    _temp_battery_old = None
+    _temp_battery_new = None
+    _battery_level_old = None
+    _battery_level_new = None
 
     def __init__(self, display):
         self._display = display
@@ -198,24 +209,84 @@ class PaperDisplay(object):
             self._draw.line([(16 + i * 56, 429), (16 + i * 56, 525)], 0x00)
         self._draw.line([(744, 426), (744, 508)], 0x00, 3)
 
-    def set_torque(self, value):
-        if value > 140:
-            value = 140
-        if value < 0:
-            value = 0
-        self._torque = value
-
-    def draw_torque(self):
-        right = self._torque * 5.6
+    def draw_torque(self, value):
+        right = value * 5.6
         self._draw.rectangle([(19, 429), (794, 505)], 0xFF)
         if right > 794:
             right = 794
         if right > 3:
             self._draw.rectangle([(19, 429), (16 + right, 505)], 0x70)
         self.draw_torque_lines()
-        self._display.draw_partial(constants.DisplayModes.GC16)
+        return value
+
+    def draw_rope_speed(self, value):
+        # TODO
+        return value
+
+    def draw_motor_temperature(self, value):
+        # TODO
+        return value
+
+    def draw_controller_temperature(self, value):
+        # TODO
+        return value
+
+    def draw_battery_temperature(self, value):
+        # TODO
+        return value
+
+    def draw_battery_level(self, value):
+        # TODO
+        return value
 
     def display_loop(self):
         self.build()
         while self._run:
-            time.sleep(0.1)
+            changed = False
+            if self._torque_old != self._torque_new:
+                self._torque_old = self.draw_torque(self._torque_new)
+                changed = True
+            if not changed and self._rope_speed_old != self._rope_speed_new:
+                self._rope_speed_old = self.draw_rope_speed(self._rope_speed_new)
+                changed = True
+            if not changed:
+                if self._temp_motor_old != self._temp_motor_new:
+                    self._temp_motor_old = self.draw_motor_temperature(self._temp_motor_new)
+                    changed = True
+                if self._temp_controller_old != self._temp_controller_new:
+                    self._temp_controller_old = self.draw_controller_temperature(self._temp_controller_new)
+                    changed = True
+                if self._temp_battery_old != self._temp_battery_new:
+                    self._temp_battery_old = self.draw_battery_temperature(self._temp_battery_new)
+                    changed = True
+            if not changed:
+                if self._battery_level_old != self._battery_level_new:
+                    self._battery_level_old = self.draw_battery_level(self._battery_level_new)
+                    changed = True
+            if changed:
+                self._display.draw_partial(constants.DisplayModes.GC16)
+            else:
+                # TODO put ePaper into sleep mode
+                time.sleep(0.1)
+
+    def set_torque(self, value):
+        if value > 140:
+            value = 140
+        if value < 0:
+            value = 0
+        self._torque_new = value
+
+    def set_rope_speed(self, value):
+        self._rope_speed_new = value
+
+    def set_motor_temperature(self, value):
+        self._temp_motor_new = value
+
+    def set_controller_temperature(self, value):
+        self._temp_controller_new = value
+
+    def set_battery_temperature(self, value):
+        self._temp_battery_new = value
+
+    def set_battery_level(self, value):
+        self._battery_level_new = value
