@@ -101,6 +101,18 @@ class AutoDisplay:
         self.frame_buf.paste(0xFF, box=(0, 0, self.width, self.height))
         self.draw_full(DisplayModes.INIT)
 
+    def activate(self):
+        """
+        Go into active state.
+        """
+        self.epd.active()
+
+    def sleep(self):
+        """
+        Go into sleep mode.
+        """
+        self.epd.sleep()
+
     @classmethod
     def _compute_diff_box(cls, a, b, round_to=2):
         """

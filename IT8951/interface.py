@@ -206,3 +206,9 @@ class EPD:
         word_l = address & 0x0000FFFF
         self.write_register(Registers.LISAR+2, word_h)
         self.write_register(Registers.LISAR, word_l)
+
+    def active(self):
+        self.spi.write_cmd_code(Commands.SYS_RUN, 1.0)
+
+    def sleep(self):
+        self.spi.write_cmd_code(Commands.SLEEP, 1.0)
